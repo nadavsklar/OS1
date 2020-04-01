@@ -26,6 +26,12 @@ sys_wait(void)
   return wait();
 }
 
+int 
+sys_memsize(void)
+{
+  return myproc()->sz;
+}
+
 int
 sys_kill(void)
 {
