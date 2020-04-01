@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
-#define KB 1000
+#define KB 1024
 
 int
 main(int argc, char *argv[])
