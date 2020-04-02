@@ -16,14 +16,22 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  exit();
+  int exitcode;
+  if (argint(0, &exitcode) < 0)
+    return -1;
+  exit(exitcode);
   return 0;  // not reached
 }
 
 int
 sys_wait(void)
 {
-  return wait();
+  int x;
+  int* exitcode;
+  if (argint(0, &x) < 0)
+    return -1;
+  exitcode = (int*) x;
+  return wait(exitcode);
 }
 
 int 
