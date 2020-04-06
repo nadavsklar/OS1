@@ -65,6 +65,38 @@ myproc(void) {
   return p;
 }
 
+static p_accu minaccu(void) 
+{
+  struct proc *p;
+  int init = 0;
+  p_accu accu = 0;
+
+  int already_holds = holding(&ptable.lock);
+
+  if (!already_holds)
+    acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == RUNNABLE || p->state == RUNNING)
+    {
+      if (!init) {
+        accu = p->accumulator;
+        init = 1;
+      }
+      else if (p->accumulator < accu) {
+          accu = p->accumulator;
+      }
+    }
+  }
+
+  if (!already_holds)
+    release(&ptable.lock);
+
+  return init ? accu : 0;
+}
+
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -111,6 +143,9 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+
+  p->accumulator = minaccu();
+  p->ps_priority = 5;
 
   return p;
 }
@@ -212,6 +247,10 @@ fork(void)
 
   pid = np->pid;
 
+  // Update ps_priority and accumulator
+  np->ps_priority = 5;
+  np->accumulator = minaccu();
+
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -219,6 +258,17 @@ fork(void)
   release(&ptable.lock);
 
   return pid;
+}
+
+int set_ps_priority(int new_priority)
+{
+
+  if (!myproc() || new_priority < 1 || new_priority > 10)
+    return -1;
+
+  myproc()->ps_priority = ((uint)new_priority);
+
+  return 0;
 }
 
 // Exit the current process.  Does not return.
@@ -333,6 +383,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  p_accu min_accu;
   
   for(;;){
     // Enable interrupts on this processor.
@@ -340,10 +391,13 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    min_accu = minaccu();
 
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+      if(p->state != RUNNABLE || p->accumulator > min_accu)
+        continue;
+      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -451,6 +505,7 @@ sleep(void *chan, struct spinlock *lk)
 
   // Tidy up.
   p->chan = 0;
+  p->accumulator = minaccu();
 
   // Reacquire original lock.
   if(lk != &ptable.lock){  //DOC: sleeplock2

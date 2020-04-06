@@ -13,6 +13,14 @@ sys_fork(void)
   return fork();
 }
 
+int sys_set_ps_priority(void)
+{
+  int new_priority;
+  if (argint(0, &new_priority) < 0)
+    return -1;
+  return set_ps_priority(new_priority);
+}
+
 int
 sys_exit(void)
 {
