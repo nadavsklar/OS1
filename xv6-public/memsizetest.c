@@ -8,7 +8,7 @@ main(int argc, char *argv[])
 	uint size = memsize();
   	printf(1, "The process is using: %dB\n", size);
 
-  	char * buffer = (char*)malloc(20 * KB);
+  	char * buffer = (char*)malloc(2 * KB);
 	size = memsize();
 	printf(1, "The process is using: %dB\n", size);
 
