@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 			set_ps_priority(5);
 			for (i = 0; i < 100; i++)
 			{
-			printf(STDOUT,"My pid is: %d priority: 1\n", childpid);
+			printf(STDOUT,"My pid is: %d priority: 5\n", childpid);
 			}
 			exit(0);
 		}
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 			set_ps_priority(10);
 			for (i = 0; i < 100; i++)
 			{
-				printf(STDOUT,"My pid is: %d priority: 1\n", childpid);
+				printf(STDOUT,"My pid is: %d priority: 10\n", childpid);
 			}
 			wait(NULL);
 			wait(NULL);

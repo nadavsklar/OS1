@@ -65,11 +65,11 @@ myproc(void) {
   return p;
 }
 
-static p_accu minaccu(void) 
+static ullong minaccu(void) 
 {
   struct proc *p;
   int init = 0;
-  p_accu accu = 0;
+  ullong accu = 0;
 
   int already_holds = holding(&ptable.lock);
 
@@ -383,7 +383,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  p_accu min_accu;
+  ullong min_accu;
   
   for(;;){
     // Enable interrupts on this processor.

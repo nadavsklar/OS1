@@ -50,7 +50,7 @@ struct proc {
   struct inode *cwd;            // Current directory
   char name[16];                // Process name (debugging)
   int exitcode;                 // Exit status
-  p_accu accumulator;           // Process accumulator
+  ullong accumulator;           // Process accumulator
   uint ps_priority : 4;         // Process priority 
 };
 
