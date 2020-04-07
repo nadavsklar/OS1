@@ -101,6 +101,20 @@ static ullong minaccu(void)
   return init ? accu : 0;
 }
 
+// Return process performance
+int proc_info(struct perf *performance)
+{
+  if (!myproc() || ((void *)performance) == NULL)
+    return -1;
+
+  performance->ps_priority = myproc()->ps_priority;
+  performance->stime = myproc()->cfs.stime;
+  performance->rtime = myproc()->cfs.rtime;
+  performance->retime = myproc()->cfs.retime;
+
+  return 0;
+}
+
 // Update scheduling policy
 int policy(int new_policy)
 {
@@ -494,17 +508,12 @@ scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      switch (sched_type)
-      {
-        case 1:
-          if (p->accumulator > min_accu)
-            continue;
-        case 2:
-          if (TIME_RATIO(p->cfs) > min_ratio)
-            continue;
-        default:
-          ;
-      }
+      if (sched_type == 1 && p->accumulator > min_accu)
+        continue;
+
+      if (sched_type == 2 && TIME_RATIO(p->cfs) > min_ratio)
+        continue;
+      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.

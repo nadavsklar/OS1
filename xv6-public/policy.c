@@ -3,7 +3,11 @@
 
 int main(int argc, char *argv[])
 {
-	int new_policy = atoi(argv[1]);
+	int new_policy;
+	if (*argv[1] == '-')
+		new_policy = -1;
+	else 
+	 	new_policy = atoi(argv[1]);
 	policy(new_policy);
 
 	switch (new_policy) 

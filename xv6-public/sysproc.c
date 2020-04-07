@@ -13,6 +13,16 @@ sys_fork(void)
   return fork();
 }
 
+int sys_proc_info(void)
+{
+  struct perf * performance;
+  char * x;
+  if (argptr(0, &x, sizeof(struct perf)) < 0)
+    return -1;
+  performance = (struct perf *) x;
+  return proc_info(performance);
+}
+
 int sys_policy(void)
 {
   int new_policy;
