@@ -121,6 +121,9 @@ int             wait(int*);
 void            wakeup(void*);
 void            yield(void);
 int 			set_ps_priority(int);
+int 			set_cfs_priority(int);
+void			update_cfs_stats(void);
+int 			policy(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -189,3 +192,6 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+// Scheduling policy
+extern uint sched_type;

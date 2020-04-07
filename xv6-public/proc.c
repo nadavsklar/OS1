@@ -14,6 +14,10 @@ struct {
 
 static struct proc *initproc;
 
+uint sched_type = 0;
+const ldouble factors[] = {0.0, 0.75, 1.0, 1.25};
+
+
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -65,6 +69,7 @@ myproc(void) {
   return p;
 }
 
+// Get the minimum accumulator from all running/ready processes.
 static ullong minaccu(void) 
 {
   struct proc *p;
@@ -96,6 +101,91 @@ static ullong minaccu(void)
   return init ? accu : 0;
 }
 
+// Update scheduling policy
+int policy(int new_policy)
+{
+  if (new_policy < 0 || new_policy > 2)
+    return -1;
+
+  sched_type = ((uint)new_policy);
+  return 0;
+}
+
+static ldouble minratio(void) 
+{
+  struct proc *p;
+  int init = 0;
+  ldouble ratio = 0;
+
+  int already_holds = holding(&ptable.lock);
+
+  if (!already_holds)
+    acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == RUNNABLE || p->state == RUNNING)
+    {
+      if (!init) {
+        ratio = TIME_RATIO(p->cfs);
+        init = 1;
+      }
+      else if (TIME_RATIO(p->cfs) < ratio) {
+          ratio = TIME_RATIO(p->cfs);
+      }
+    }
+  }
+
+  if (!already_holds)
+    release(&ptable.lock);
+
+  return init ? ratio : 0;
+}
+
+void update_cfs_stats(void)
+{
+  struct proc *p;
+
+  int already_holds = holding(&ptable.lock);
+
+  if (!already_holds)
+    acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    switch(p->state)
+    {
+      case RUNNING:
+        p->cfs.rtime++;
+        break;
+
+      case RUNNABLE:
+        p->cfs.retime++;
+        break;
+
+      case SLEEPING:
+        p->cfs.stime++;
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  if (!already_holds)
+    release(&ptable.lock);
+}
+
+int set_cfs_priority(int new_priority) 
+{
+
+  if (!myproc() || new_priority < 1 || new_priority > 3)
+    return -1;
+
+  myproc()->cfs.cfs_priority = ((uint)new_priority);
+
+  return 0;
+}
 
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
@@ -146,6 +236,11 @@ found:
 
   p->accumulator = minaccu();
   p->ps_priority = 5;
+
+  p->cfs.cfs_priority = 2;
+  p->cfs.rtime = 0;
+  p->cfs.stime = 0;
+  p->cfs.retime = 0;
 
   return p;
 }
@@ -247,9 +342,8 @@ fork(void)
 
   pid = np->pid;
 
-  // Update ps_priority and accumulator
-  np->ps_priority = 5;
-  np->accumulator = minaccu();
+  // Update cfs_priority
+  np->cfs.cfs_priority = curproc->cfs.cfs_priority;
 
   acquire(&ptable.lock);
 
@@ -384,7 +478,8 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   ullong min_accu;
-  
+  ldouble min_ratio;
+
   for(;;){
     // Enable interrupts on this processor.
     sti();
@@ -392,12 +487,24 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     min_accu = minaccu();
+    min_ratio = minratio();
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 
-      if(p->state != RUNNABLE || p->accumulator > min_accu)
+      if (p->state != RUNNABLE)
         continue;
-      
+
+      switch (sched_type)
+      {
+        case 1:
+          if (p->accumulator > min_accu)
+            continue;
+        case 2:
+          if (TIME_RATIO(p->cfs) > min_ratio)
+            continue;
+        default:
+          ;
+      }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.

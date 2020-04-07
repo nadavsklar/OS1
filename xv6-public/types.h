@@ -2,6 +2,7 @@ typedef unsigned int   uint;
 typedef unsigned short ushort;
 typedef unsigned char  uchar;
 typedef uint pde_t;
+typedef long double ldouble;
 typedef unsigned long long ullong;
 
 #define KB 			1024

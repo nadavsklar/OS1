@@ -13,6 +13,22 @@ sys_fork(void)
   return fork();
 }
 
+int sys_policy(void)
+{
+  int new_policy;
+  if (argint(0, &new_policy) < 0)
+    return -1;
+  return policy(new_policy);
+}
+
+int sys_set_cfs_priority(void)
+{
+  int new_priority;
+  if (argint(0, &new_priority) < 0)
+    return -1;
+  return set_cfs_priority(new_priority);
+}
+
 int sys_set_ps_priority(void)
 {
   int new_priority;

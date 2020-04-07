@@ -107,6 +107,7 @@ trap(struct trapframe *tf)
   {
     // Update process accumulator
     myproc()->accumulator = myproc()->accumulator + myproc()->ps_priority;
+    update_cfs_stats();
     yield();
   }
 

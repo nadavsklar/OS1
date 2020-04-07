@@ -34,6 +34,18 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+struct cfs_stat
+{
+  uint      cfs_priority : 2;     // Process priority in CFS
+  ldouble   rtime;                // Process time in running state
+  ldouble   stime;                // Process time in sleeping state
+  ldouble   retime;               // Process time in runnable state
+};
+
+extern const ldouble factors[];
+#define DECAY_FACTOR(cfs_priority) factors[cfs_priority]
+#define TIME_RATIO(cfs) ((cfs.rtime * DECAY_FACTOR(cfs.cfs_priority)) / (cfs.rtime + cfs.stime + cfs.retime)) 
+
 // Per-process state
 struct proc {
   uint sz;                      // Size of process memory (bytes)
@@ -52,6 +64,7 @@ struct proc {
   int exitcode;                 // Exit status
   ullong accumulator;           // Process accumulator
   uint ps_priority : 4;         // Process priority 
+  struct cfs_stat cfs;         // CFS statistics
 };
 
 // Process memory is laid out contiguously, low addresses first:
