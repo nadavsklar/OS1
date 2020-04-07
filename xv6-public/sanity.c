@@ -3,12 +3,9 @@
 
 int main(int argc, char *argv[])
 {
-	int secchildpid;
-
 	printf(STDOUT, "%s %s %s %s %s\n", "PID", "PS_PRIORITY", "STIME", "RETIME", "RTIME");
-	int childpid = fork();
 
-	if (childpid == 0)
+	if (fork() == 0)
 	{
 		int i = 1000000, dummy = 0;	
 		struct perf p;	
@@ -28,8 +25,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		secchildpid = fork();
-		if (secchildpid == 0)
+		if (fork() == 0)
 		{
 			int i = 1000000, dummy = 0;
 			struct perf p;	
